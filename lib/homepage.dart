@@ -51,6 +51,7 @@ class HomePage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildButton(context, 'Yes', Colors.green, Colors.white, () async {
+
                       Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => DoctorLoginPage()),
