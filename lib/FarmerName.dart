@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'labtechnicianupload.dart'; // Ensure correct import
 
@@ -10,20 +11,45 @@ class FarmerNamePage extends StatefulWidget {
 
 class _FarmerNamePageState extends State<FarmerNamePage> {
   final TextEditingController _nameController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void _navigateToNextPage() {
-    if (_nameController.text.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LabTechnicianUploadPage(farmerName: _nameController.text),
-        ),
-      );
-    } else {
-      // Show error message if input is empty
+  Future<void> _addFarmerAndNavigate() async {
+    String farmerName = _nameController.text.trim();
+
+    if (farmerName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter the farmer's name"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Create a unique farmer ID
+      String farmerId = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Add farmer details to Firestore
+      await _firestore.collection('farmers').add({
+        'farmer_id': farmerId,
+        'name': farmerName,
+      });
+
+      print('Farmer added successfully');
+
+      // Navigate to next page after successful addition
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LabTechnicianUploadPage(farmerName: farmerName),
+        ),
+      );
+    } catch (e) {
+      print('Error adding Farmer: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error adding farmer: ${e.toString()}"),
           backgroundColor: Colors.red,
         ),
       );
@@ -70,7 +96,7 @@ class _FarmerNamePageState extends State<FarmerNamePage> {
                 ),
                 const SizedBox(height: 30),
                 ElevatedButton(
-                  onPressed: _navigateToNextPage,
+                  onPressed: _addFarmerAndNavigate,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF89AC46),
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),

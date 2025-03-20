@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'doctorcaseanlysis.dart';
 
 class DoctorCasesPage extends StatelessWidget {
-  const DoctorCasesPage({super.key});
+  final String doctorId; // Store doctorId
+
+  const DoctorCasesPage({super.key, required this.doctorId}); // Constructor updated
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +33,14 @@ class DoctorCasesPage extends StatelessWidget {
                   subtitle: const Text("Click to review"),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    // Navigate to Case Analysis Page with case ID
+                    // Navigate to Case Analysis Page with doctorId and caseId
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DoctorCaseAnalysisPage(caseId: index + 1),
+                        builder: (context) => DoctorCaseAnalysisPage(
+                          caseId: index + 1,
+                          doctorId: doctorId, // Pass doctorId forward
+                        ),
                       ),
                     );
                   },

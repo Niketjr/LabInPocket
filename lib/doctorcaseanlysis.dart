@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class DoctorCaseAnalysisPage extends StatelessWidget {
   final int caseId;
+  final String doctorId; // Added doctorId
 
-  const DoctorCaseAnalysisPage({super.key, required this.caseId});
+  const DoctorCaseAnalysisPage({
+    super.key,
+    required this.caseId,
+    required this.doctorId, // Ensure doctorId is required
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,14 +18,14 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
           "Case #$caseId Analysis",
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: const Color(0xFF1B5E20), // Dark green for professionalism
+        backgroundColor: const Color(0xFF1B5E20),
         centerTitle: true,
         elevation: 3,
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF2E7D32), Color(0xFFA5D6A7)], // Professional green gradient
+            colors: [Color(0xFF2E7D32), Color(0xFFA5D6A7)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -33,7 +38,6 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Image placeholder
                     Center(
                       child: Container(
                         height: 170,
@@ -52,7 +56,6 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 15),
 
-                    // Diagnosis Section
                     Card(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -60,7 +63,7 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(14),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center, // Centered content
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Text(
                               "Diagnosis Options",
@@ -69,7 +72,6 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
 
-                            // Diagnosis Buttons
                             _buildDiagnosisButton(context, "Infected with Babesiosis", Colors.red, Icons.warning_amber_rounded),
                             _buildDiagnosisButton(context, "Infected with Anaplasmosis", Colors.orangeAccent, Icons.warning_rounded),
                             _buildDiagnosisButton(context, "Not Infected", Colors.green, Icons.check_circle_outline),
@@ -81,7 +83,6 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
 
                     const SizedBox(height: 15),
 
-                    // Additional Suggestions
                     Card(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -103,18 +104,15 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                                 fillColor: Colors.grey[100],
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                               ),
-                              maxLines: 2, // Smaller text field
+                              maxLines: 2,
                             ),
                             const SizedBox(height: 12),
 
-                            // Submit Feedback Button
                             Center(
                               child: ElevatedButton(
-                                onPressed: () {
-                                  // Handle feedback submission
-                                },
+                                onPressed: () {},
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueAccent, // Blue for differentiation
+                                  backgroundColor: Colors.blueAccent,
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                                   elevation: 5,
@@ -129,18 +127,17 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // Main Submit Button
                     Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth: constraints.maxWidth * 0.8, // Ensures button stays within screen
+                          maxWidth: constraints.maxWidth * 0.8,
                         ),
                         child: ElevatedButton(
                           onPressed: () {
                             // Store diagnosis and suggestions in DB
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1B5E20), // Dark green
+                            backgroundColor: const Color(0xFF1B5E20),
                             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                             elevation: 5,
@@ -159,21 +156,18 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
     );
   }
 
-  // Diagnosis Button (Compact)
   Widget _buildDiagnosisButton(BuildContext context, String text, Color color, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 300), // Limits button width
+        constraints: const BoxConstraints(maxWidth: 300),
         child: ElevatedButton.icon(
-          onPressed: () {
-            // Handle selection logic
-          },
+          onPressed: () {},
           icon: Icon(icon, color: Colors.white, size: 22),
           label: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
           style: ElevatedButton.styleFrom(
             backgroundColor: color,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14), // Adjusted padding
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             elevation: 4,
           ),

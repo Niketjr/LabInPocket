@@ -1,5 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'doctorlogin.dart';
 import 'labtechnicianlogin.dart';
@@ -50,22 +48,18 @@ class HomePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildButton(context, 'Yes', Colors.green, Colors.white, () async {
-
+                    _buildButton(context, 'Yes', Colors.green, Colors.white, () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => DoctorLoginPage()),
+                        context,
+                        MaterialPageRoute(builder: (context) => DoctorLoginPage()),
                       );
-                      // await FirebaseFirestore.instance.collection("Doctor").doc("Krishna").set({"Name": "Ashok"});
-
-
                     }),
                     SizedBox(width: 20),
                     _buildButton(context, 'No', Colors.redAccent, Colors.white, () {
                       // Navigate to Lab technician Login
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Labtechnicianlogin()),
+                        MaterialPageRoute(builder: (context) => LabTechnicianLogin()),
                       );
                     }),
                   ],

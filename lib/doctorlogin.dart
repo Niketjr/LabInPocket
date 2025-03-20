@@ -1,9 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'doctorcases.dart';
 import 'doctorregistration.dart';
 
-class DoctorLoginPage extends StatelessWidget {
+class DoctorLoginPage extends StatefulWidget {
   const DoctorLoginPage({super.key});
+
+  @override
+  _DoctorLoginPageState createState() => _DoctorLoginPageState();
+}
+
+class _DoctorLoginPageState extends State<DoctorLoginPage> {
+  final TextEditingController _loginController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  void _login() async {
+    String login = _loginController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (login.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("All fields are required")),
+      );
+      return;
+    }
+
+    try {
+      QuerySnapshot querySnapshot = await _firestore
+          .collection("doctors")
+          .where("login", isEqualTo: login)
+          .where("password", isEqualTo: password)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var doctorData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+        String doctorId = doctorData["doctor_id"];
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login Successful")),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DoctorCasesPage(doctorId: doctorId)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid credentials")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    }
+  }
+
+  void _navigateToRegister() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DoctorRegistrationPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +87,13 @@ class DoctorLoginPage extends StatelessWidget {
               children: [
                 const Text(
                   "Doctor Login",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(height: 30),
                 TextField(
+                  controller: _loginController,
                   decoration: InputDecoration(
-                    hintText: "Enter Email",
+                    hintText: "Enter Login ID",
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -45,6 +101,7 @@ class DoctorLoginPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 TextField(
+                  controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     hintText: "Enter Password",
@@ -55,13 +112,7 @@ class DoctorLoginPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    // Navigate to Doctor Cases Page after authentication
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const DoctorCasesPage()),
-                    );
-                  },
+                  onPressed: _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF89AC46),
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
@@ -71,17 +122,8 @@ class DoctorLoginPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 15),
                 TextButton(
-                  onPressed: () {
-                    // Navigate to Doctor Registration Page
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const DoctorRegistrationPage()),
-                    );
-                  },
-                  child: const Text(
-                    "New user? Register",
-                    style: TextStyle(fontSize: 16, color: Colors.white, decoration: TextDecoration.underline),
-                  ),
+                  onPressed: _navigateToRegister,
+                  child: const Text("New user? Register", style: TextStyle(fontSize: 16, color: Colors.white, decoration: TextDecoration.underline)),
                 ),
               ],
             ),
