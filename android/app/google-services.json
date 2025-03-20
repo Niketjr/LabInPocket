@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "631739280431",
+    "project_id": "labinpocket",
+    "storage_bucket": "labinpocket.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631739280431:android:333a4269683852cbad6ada",
+        "android_client_info": {
+          "package_name": "com.example.lab_in_pocket"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVFJsT_QruT8D_jT2oPy_a0HpdEHbtidY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
