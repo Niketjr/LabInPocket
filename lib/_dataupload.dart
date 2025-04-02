@@ -65,9 +65,11 @@ class Service {
   Future<void> addDoctorDiagnosisSuggestion() async {
     try {
       await _firestore.collection('doctor_diagnosis_suggestions').add({
-        'labtech_id': 'labtech123',
-        'doctor_id': 'doc789',
-        'case_id': 'case001',
+
+        'labtech_id': '1742492332789',
+        'doctor_id': 'doc901',
+        'case_id': 'case003',
+
         'status': 'unanswered',
         'diagnosis_number': 1,
         'suggestions': 'The cattle might have an infection.',

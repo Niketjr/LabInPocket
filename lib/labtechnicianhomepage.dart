@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'FarmerName.dart';
 import 'CaseDetailsPage.dart';
 
 class LabTechnicianHomePage extends StatefulWidget {
-  final Map<String, String>? newCase;
+  final String labtechId;
 
-  const LabTechnicianHomePage({super.key, this.newCase});
 
+  const LabTechnicianHomePage({super.key, required this.labtechId});
 
   @override
   _LabTechnicianHomePageState createState() => _LabTechnicianHomePageState();
@@ -14,30 +15,83 @@ class LabTechnicianHomePage extends StatefulWidget {
 
 class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
   bool showAnswered = true;
-
-  List<Map<String, String>> unansweredCases = [];
-  List<Map<String, String>> answeredCases = [
-    {
-      "farmerName": "John Doe",
-      "imagePath": "assets/sample1.png",
-      "diagnosis": "Infected with Babesiosis",
-      "feedback": "Administer prescribed medication and monitor for 2 weeks."
-    },
-    {
-      "farmerName": "Jane Smith",
-      "imagePath": "assets/sample2.png",
-      "diagnosis": "Not Infected",
-      "feedback": "No infection detected. Maintain hygiene and monitor symptoms."
-    },
-  ];
+  List<Map<String, dynamic>> answeredCases = [];
+  List<Map<String, dynamic>> unansweredCases = [];
 
   @override
   void initState() {
     super.initState();
-    if (widget.newCase != null) {
+    fetchCases();
+  }
+
+  Future<void> fetchCases() async {
+    try {
+      print("LabTech ID received: ${widget.labtechId}");
+
+      // Fetch cases from doctor_diagnosis_suggestions matching the labtech_id.
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection("doctor_diagnosis_suggestions")
+          .where("labtech_id", isEqualTo: widget.labtechId)
+          .get();
+
+      List<Map<String, dynamic>> fetchedAnswered = [];
+      List<Map<String, dynamic>> fetchedUnanswered = [];
+
+      // Collect all farmer IDs from the fetched cases.
+      // Here we assume that the field in each case document that holds the farmer's ID is "farmer_id".
+      Set<String> farmerIds = {};
+      List<Map<String, dynamic>> allCases = [];
+
+      for (var doc in snapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        String farmerId = data["farmer_id"] ?? "";
+        String caseId = data["case_id"];
+        if (farmerId.isNotEmpty) {
+          farmerIds.add(farmerId);
+        }
+        allCases.add(data);
+      }
+
+      // Fetch all corresponding farmer documents in a single query.
+      Map<String, String> farmerNameMap = {};
+      if (farmerIds.isNotEmpty) {
+        QuerySnapshot farmerSnapshot = await FirebaseFirestore.instance
+            .collection("farmers")
+        // Here we assume that the unique ID in the farmers collection is stored in the "id" field.
+            .where("farmer_id", whereIn: farmerIds.toList())
+            .get();
+
+        for (var doc in farmerSnapshot.docs) {
+          var farmerData = doc.data() as Map<String, dynamic>;
+          // Map the farmer's "id" to his/her "name".
+          String idKey = farmerData["farmer_id"] ?? "";
+          String nameValue = farmerData["name"] ?? "Unknown Farmer";
+          if (idKey.isNotEmpty) {
+            farmerNameMap[idKey] = nameValue;
+          }
+        }
+      }
+
+      // Assign the correct farmer name to each case based on the matching farmer document.
+      for (var caseData in allCases) {
+        String farmerId = caseData["farmer_id"] ?? "";
+        caseData["name"] = farmerNameMap[farmerId] ?? "Unknown Farmer";
+
+        if (caseData["status"] == "answered") {
+          fetchedAnswered.add(caseData);
+        } else {
+          fetchedUnanswered.add(caseData);
+        }
+      }
+
       setState(() {
-        unansweredCases.add(widget.newCase!);
+        answeredCases = fetchedAnswered;
+        unansweredCases = fetchedUnanswered;
+        print("Answered Cases: $answeredCases");
+        print("Unanswered Cases: $unansweredCases");
       });
+    } catch (e) {
+      print("Error fetching cases: $e");
     }
   }
 
@@ -59,32 +113,25 @@ class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildToggleButton("Answered", showAnswered, () {
-                  setState(() {
-                    showAnswered = true;
-                  });
+                  setState(() => showAnswered = true);
                 }),
                 const SizedBox(width: 15),
                 _buildToggleButton("Unanswered", !showAnswered, () {
-                  setState(() {
-                    showAnswered = false;
-                  });
+                  setState(() => showAnswered = false);
                 }),
               ],
             ),
           ),
-
           Expanded(
             child: showAnswered
                 ? _buildCaseList(answeredCases, Colors.green, "Answered")
                 : _buildCaseList(unansweredCases, Colors.red, "Unanswered"),
-
           ),
         ],
       ),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => FarmerNamePage()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => FarmerNamePage(labtechId: widget.labtechId)));
         },
         backgroundColor: const Color(0xFF89AC46),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -92,7 +139,6 @@ class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
       ),
     );
   }
-
 
   Widget _buildToggleButton(String text, bool isActive, VoidCallback onTap) {
     return ElevatedButton(
@@ -109,7 +155,7 @@ class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
     );
   }
 
-  Widget _buildCaseList(List<Map<String, String>> cases, Color iconColor, String status) {
+  Widget _buildCaseList(List<Map<String, dynamic>> cases, Color iconColor, String status) {
     if (cases.isEmpty) {
       return const Center(
         child: Text("No cases available", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
@@ -125,7 +171,7 @@ class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
     );
   }
 
-  Widget _buildCaseCard(Map<String, String> caseData, Color iconColor, String status) {
+  Widget _buildCaseCard(Map<String, dynamic> caseData, Color iconColor, String status) {
     return GestureDetector(
       onTap: () {
         if (status == "Answered") {
@@ -133,10 +179,7 @@ class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
             context,
             MaterialPageRoute(
               builder: (context) => CaseDetailsPage(
-                farmerName: caseData['farmerName'] ?? "Unknown Farmer",
-                imagePath: caseData['imagePath'] ?? "assets/cow.png",
-                diagnosis: caseData['diagnosis'] ?? "No diagnosis available",
-                feedback: caseData['feedback'] ?? "No feedback received",
+                farmerName: caseData['name'] ?? "Unknown Farmer", caseId: caseData["case_id"] ?? "None" ,
               ),
             ),
           );
@@ -157,7 +200,7 @@ class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   image: DecorationImage(
-                    image: AssetImage(caseData['imagePath'] ?? 'assets/cow.png'),
+                    image: AssetImage(caseData['image_path'] ?? 'assets/cow.png'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -168,7 +211,7 @@ class _LabTechnicianHomePageState extends State<LabTechnicianHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      caseData['farmerName'] ?? "Unknown Farmer",
+                      caseData['name'] ?? "Unknown Farmer",
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 5),

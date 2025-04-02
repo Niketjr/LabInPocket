@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore for upload functionality
 import 'labtechnicianhomepage.dart';
 
 class DoctorListPage extends StatelessWidget {
   final String farmerName;
+  final String farmer_id;
+  final String labtechId;
+  final String image_id;
   final File image;
 
-  DoctorListPage({super.key, required this.farmerName, required this.image});
-
-  final List<Map<String, String>> doctors = [
-    {"name": "Dr. Rajesh Kumar", "specialty": "Veterinary Specialist", "image": "assets/doctor1.jpg"},
-    {"name": "Dr. Meera Kapoor", "specialty": "Animal Pathologist", "image": "assets/doctor2.jpg"},
-    {"name": "Dr. Arjun Sharma", "specialty": "Cattle Disease Expert", "image": "assets/doctor3.jpg"},
-    {"name": "Dr. Priya Nair", "specialty": "Livestock Health Consultant", "image": "assets/doctor4.jpg"},
-  ];
+  DoctorListPage({super.key, required this.farmerName, required this.image, required this.farmer_id, required this.labtechId, required this.image_id});
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +36,29 @@ class DoctorListPage extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
-          child: ListView.builder(
-            itemCount: doctors.length,
-            itemBuilder: (context, index) {
-              return _doctorCard(context, doctors[index]);
+          child: FutureBuilder<QuerySnapshot>(
+            future: FirebaseFirestore.instance.collection('doctors').get(), // Fetch doctors data from the Firestore collection
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return const Center(child: Text("Error fetching doctor data"));
+              } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(child: Text("No doctors found"));
+              }
+
+              final doctors = snapshot.data!.docs;
+
+              return ListView.builder(
+                itemCount: doctors.length,
+                itemBuilder: (context, index) {
+                  final doctor = doctors[index];
+                  final doctorName = doctor['name']; // Assuming the Firestore document has a 'name' field for the doctor
+                  final doctorId = doctor['doctor_id']; // Assuming the Firestore document ID is used as the doctor_id
+
+                  return _doctorCard(context, doctorName, doctorId);
+                },
+              );
             },
           ),
         ),
@@ -50,15 +66,29 @@ class DoctorListPage extends StatelessWidget {
     );
   }
 
-  Widget _doctorCard(BuildContext context, Map<String, String> doctor) {
+  Widget _doctorCard(BuildContext context, String doctorName, String doctorId) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        // Generate a random case ID (using the current milliseconds timestamp)
+        String caseId = "case${DateTime.now().millisecondsSinceEpoch}"; // Random case ID
+        int diagnosisNumber = DateTime.now().millisecondsSinceEpoch % 100000; // Random diagnosis number
+
+        // Prepare the data to upload to Firestore
+        await FirebaseFirestore.instance.collection('doctor_diagnosis_suggestions').add({
+          'case_id': caseId,
+          'diagnosis_number': diagnosisNumber,
+          'doctor_id': doctorId,  // Upload the selected doctor's id
+          'farmer_id': farmer_id, // Upload the passed farmer_id
+          'labtech_id': labtechId, // Upload the passed labtechId
+          'status': 'unanswered',   // Default status
+          'suggestions': '',       // Default suggestions
+        });
+
+        // Navigate to the next page (LabTechnicianHomePage)
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => LabTechnicianHomePage(
-              newCase: {"farmerName": farmerName, "imagePath": "assets/cow.png"},
-            ),
+            builder: (context) => LabTechnicianHomePage(labtechId: labtechId), // Pass labtechId
           ),
         );
       },
@@ -67,9 +97,7 @@ class DoctorListPage extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 10),
         child: ListTile(
           contentPadding: const EdgeInsets.all(15),
-          leading: CircleAvatar(radius: 30, backgroundImage: AssetImage(doctor["image"]!)),
-          title: Text(doctor["name"]!, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-          subtitle: Text(doctor["specialty"]!, style: const TextStyle(fontSize: 14, color: Colors.white70)),
+          title: Text(doctorName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70),
         ),
       ),

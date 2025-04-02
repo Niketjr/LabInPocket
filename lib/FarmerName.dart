@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'labtechnicianupload.dart'; // Ensure correct import
 
 class FarmerNamePage extends StatefulWidget {
-  const FarmerNamePage({super.key});
+  final String labtechId;
+  const FarmerNamePage({super.key, required this.labtechId});
 
   @override
   _FarmerNamePageState createState() => _FarmerNamePageState();
@@ -13,40 +15,38 @@ class _FarmerNamePageState extends State<FarmerNamePage> {
   final TextEditingController _nameController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> _addFarmerAndNavigate() async {
-    String farmerName = _nameController.text.trim();
 
-    if (farmerName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter the farmer's name"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  Future<void> _navigateToNextPage() async {
+    if (_nameController.text.isNotEmpty) {
+      try {
+        // Generate a unique farmer_id using the current timestamp.
+        String farmerId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    try {
-      // Create a unique farmer ID
-      String farmerId = DateTime.now().millisecondsSinceEpoch.toString();
+        // Upload the farmer name to the "farmers" collection.
+        await FirebaseFirestore.instance.collection("farmers").doc(farmerId).set({
+          'farmer_id': farmerId,
+          'name': _nameController.text,
+        });
 
-      // Add farmer details to Firestore
-      await _firestore.collection('farmers').add({
-        'farmer_id': farmerId,
-        'name': farmerName,
-      });
+        // After successful upload, navigate to the next page.
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LabTechnicianUploadPage(farmerName: _nameController.text, farmer_id: farmerId, labtechId: widget.labtechId,),
+          ),
+        );
+      } catch (e) {
+        // Display an error if upload fails.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error uploading farmer name: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      // Show error message if input is empty.
 
-      print('Farmer added successfully');
-
-      // Navigate to next page after successful addition
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LabTechnicianUploadPage(farmerName: farmerName),
-        ),
-      );
-    } catch (e) {
-      print('Error adding Farmer: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error adding farmer: ${e.toString()}"),

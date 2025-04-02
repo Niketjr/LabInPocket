@@ -34,13 +34,22 @@ class _LabTechnicianLoginState extends State<LabTechnicianLogin> {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
+
+        var labtechDoc = querySnapshot.docs.first;
+        String labtechId = labtechDoc['technician_id']; // Fetching the document ID as labtech_id
+
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Login Successful")),
         );
 
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const LabTechnicianHomePage()),
+
+          MaterialPageRoute(
+            builder: (context) => LabTechnicianHomePage(labtechId: labtechId),
+          ),
+
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -53,6 +62,7 @@ class _LabTechnicianLoginState extends State<LabTechnicianLogin> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -135,3 +145,4 @@ class _LabTechnicianLoginState extends State<LabTechnicianLogin> {
     );
   }
 }
+

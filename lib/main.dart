@@ -10,12 +10,14 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   // await Service().addLabTechnician();
   // await Service().addDoctor();
   // await Service().addFarmer();
   //
   // await Service().uploadImage();
   // await Service().addDoctorDiagnosisSuggestion();
+
 
   runApp(const MyApp());
 }
