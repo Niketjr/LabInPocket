@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'labtechnicianupload.dart'; // Ensure correct import
@@ -12,6 +13,8 @@ class FarmerNamePage extends StatefulWidget {
 
 class _FarmerNamePageState extends State<FarmerNamePage> {
   final TextEditingController _nameController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 
   Future<void> _navigateToNextPage() async {
     if (_nameController.text.isNotEmpty) {
@@ -43,9 +46,10 @@ class _FarmerNamePageState extends State<FarmerNamePage> {
       }
     } else {
       // Show error message if input is empty.
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter the farmer's name"),
+        SnackBar(
+          content: Text("Error adding farmer: ${e.toString()}"),
           backgroundColor: Colors.red,
         ),
       );
@@ -92,7 +96,7 @@ class _FarmerNamePageState extends State<FarmerNamePage> {
                 ),
                 const SizedBox(height: 30),
                 ElevatedButton(
-                  onPressed: _navigateToNextPage,
+                  onPressed: _addFarmerAndNavigate,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF89AC46),
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
