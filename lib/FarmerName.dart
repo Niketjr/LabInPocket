@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'labtechnicianupload.dart'; // Ensure correct import
 
 class FarmerNamePage extends StatefulWidget {
-  const FarmerNamePage({super.key});
+  final String labtechId;
+  const FarmerNamePage({super.key, required this.labtechId});
 
   @override
   _FarmerNamePageState createState() => _FarmerNamePageState();
@@ -11,16 +13,36 @@ class FarmerNamePage extends StatefulWidget {
 class _FarmerNamePageState extends State<FarmerNamePage> {
   final TextEditingController _nameController = TextEditingController();
 
-  void _navigateToNextPage() {
+  Future<void> _navigateToNextPage() async {
     if (_nameController.text.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LabTechnicianUploadPage(farmerName: _nameController.text),
-        ),
-      );
+      try {
+        // Generate a unique farmer_id using the current timestamp.
+        String farmerId = DateTime.now().millisecondsSinceEpoch.toString();
+
+        // Upload the farmer name to the "farmers" collection.
+        await FirebaseFirestore.instance.collection("farmers").doc(farmerId).set({
+          'farmer_id': farmerId,
+          'name': _nameController.text,
+        });
+
+        // After successful upload, navigate to the next page.
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LabTechnicianUploadPage(farmerName: _nameController.text, farmer_id: farmerId, labtechId: widget.labtechId,),
+          ),
+        );
+      } catch (e) {
+        // Display an error if upload fails.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error uploading farmer name: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else {
-      // Show error message if input is empty
+      // Show error message if input is empty.
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please enter the farmer's name"),

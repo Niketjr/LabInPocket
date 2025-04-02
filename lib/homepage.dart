@@ -65,7 +65,7 @@ class HomePage extends StatelessWidget {
                       // Navigate to Lab technician Login
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Labtechnicianlogin()),
+                        MaterialPageRoute(builder: (context) => LabTechnicianLogin()),
                       );
                     }),
                   ],

@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'DoctorList.dart';
+import 'DoctorList.dart';  // Assuming this is a separate page
 
 class DiagnosisPage extends StatelessWidget {
   final String farmerName;
+  final String farmer_id;
+  final String labtechId;
+  final String image_id;
   final File image;
 
-  const DiagnosisPage({super.key, required this.farmerName, required this.image});
+  const DiagnosisPage({
+    super.key,
+    required this.farmerName,
+    required this.image,
+    required this.farmer_id,
+    required this.labtechId,
+    required this.image_id,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +54,6 @@ class DiagnosisPage extends StatelessWidget {
                   child: Image.file(image, width: 250, height: 250, fit: BoxFit.cover),
                 ),
                 const SizedBox(height: 20),
-
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
@@ -62,7 +71,6 @@ class DiagnosisPage extends StatelessWidget {
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                       const SizedBox(height: 15),
-
                       _diagnosisTile("Infected with Babesiosis", true),
                       _diagnosisTile("Infected with Anaplasmosis", true),
                       _diagnosisTile("Not Infected", false),
@@ -70,12 +78,20 @@ class DiagnosisPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 30),
-
                 ElevatedButton(
                   onPressed: () {
+                    // Make sure all necessary fields are passed to DoctorListPage
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => DoctorListPage(farmerName: farmerName, image: image)),
+                      MaterialPageRoute(
+                        builder: (context) => DoctorListPage(
+                          farmerName: farmerName,
+                          image: image,
+                          farmer_id: farmer_id,
+                          labtechId: labtechId,
+                          image_id: image_id,  // Make sure image_id is passed
+                        ),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
