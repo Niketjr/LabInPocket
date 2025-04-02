@@ -39,7 +39,7 @@ class _FarmerNamePageState extends State<FarmerNamePage> {
         // Display an error if upload fails.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error uploading farmer name: $e"),
+            content: Text("Please enter a farmer name"),
             backgroundColor: Colors.red,
           ),
         );
@@ -49,7 +49,7 @@ class _FarmerNamePageState extends State<FarmerNamePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error adding farmer: ${e.toString()}"),
+          content: Text("Please enter a farmer name"),
           backgroundColor: Colors.red,
         ),
       );
@@ -96,7 +96,7 @@ class _FarmerNamePageState extends State<FarmerNamePage> {
                 ),
                 const SizedBox(height: 30),
                 ElevatedButton(
-                  onPressed: _addFarmerAndNavigate,
+                  onPressed: _navigateToNextPage,  // ✅ Correct function name
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF89AC46),
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
