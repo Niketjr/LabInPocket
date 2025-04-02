@@ -1,21 +1,115 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:developer';
 
-class DoctorCaseAnalysisPage extends StatelessWidget {
-  final int caseId;
-  final String doctorId; // Added doctorId
+class DoctorCaseAnalysisPage extends StatefulWidget {
+  final String caseId;
+  final String doctorId;
 
   const DoctorCaseAnalysisPage({
     super.key,
     required this.caseId,
-    required this.doctorId, // Ensure doctorId is required
+    required this.doctorId,
   });
+
+  @override
+  DoctorCaseAnalysisPageState createState() => DoctorCaseAnalysisPageState();
+}
+
+class DoctorCaseAnalysisPageState extends State<DoctorCaseAnalysisPage> {
+  final TextEditingController _suggestionController = TextEditingController();
+  int? selectedDiagnosis; // Track selected diagnosis
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingDiagnosis();
+  }
+
+  // Helper function to retrieve the document by matching the case_id field.
+  Future<DocumentSnapshot?> _getExistingDoc() async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('doctor_diagnosis_suggestions')
+          .where('case_id', isEqualTo: widget.caseId.toString())
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first;
+      } else {
+        log('No document found for case_id: ${widget.caseId}');
+        return null;
+      }
+    } catch (e) {
+      log('Error querying document for case_id ${widget.caseId}: $e');
+      return null;
+    }
+  }
+
+  // Load existing diagnosis for the case using the "case_id" field.
+  Future<void> _loadExistingDiagnosis() async {
+    DocumentSnapshot? docSnapshot = await _getExistingDoc();
+    if (docSnapshot != null && docSnapshot.exists) {
+      setState(() {
+        selectedDiagnosis = docSnapshot.get('diagnosis_number');
+        _suggestionController.text = docSnapshot.get('suggestions') ?? "";
+      });
+    }
+  }
+
+  // Function to update Firestore when selecting a diagnosis.
+  // Only updates the document if it exists (matches case_id).
+  Future<void> _selectDiagnosis(int diagnosisNumber) async {
+    DocumentSnapshot? docSnapshot = await _getExistingDoc();
+    if (docSnapshot != null) {
+      try {
+        await docSnapshot.reference.update({
+          'diagnosis_number': diagnosisNumber,
+        });
+        setState(() {
+          selectedDiagnosis = diagnosisNumber;
+        });
+        log('Diagnosis option $diagnosisNumber updated for Case ${widget.caseId}');
+      } catch (e) {
+        log('Error updating diagnosis: $e');
+      }
+    } else {
+      log('No existing document found for case ${widget.caseId} to update diagnosis.');
+    }
+  }
+
+  // Function to submit final diagnosis along with suggestions.
+  // Only updates an existing document.
+  Future<void> _submitDiagnosis() async {
+    if (selectedDiagnosis == null) {
+      log('Please select a diagnosis before submitting.');
+      return;
+    }
+
+    DocumentSnapshot? docSnapshot = await _getExistingDoc();
+    if (docSnapshot != null) {
+      try {
+        await docSnapshot.reference.update({
+          'diagnosis_number': selectedDiagnosis,
+          'suggestions': _suggestionController.text,
+          'status': 'answered',
+        });
+        log('Diagnosis and suggestions updated for Case ${widget.caseId}');
+        Navigator.pop(context);
+      } catch (e) {
+        log('Error submitting diagnosis: $e');
+      }
+    } else {
+      log('No existing document found for case ${widget.caseId}. Submission aborted.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Case #$caseId Analysis",
+          "Case #${widget.caseId} Analysis",
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF1B5E20),
@@ -55,7 +149,6 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 15),
-
                     Card(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -71,18 +164,15 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                             ),
                             const SizedBox(height: 10),
-
-                            _buildDiagnosisButton(context, "Infected with Babesiosis", Colors.red, Icons.warning_amber_rounded),
-                            _buildDiagnosisButton(context, "Infected with Anaplasmosis", Colors.orangeAccent, Icons.warning_rounded),
-                            _buildDiagnosisButton(context, "Not Infected", Colors.green, Icons.check_circle_outline),
-                            _buildDiagnosisButton(context, "Not Clear", Colors.grey, Icons.help_outline),
+                            _buildDiagnosisButton(context, "Infected with Babesiosis", Colors.red, Icons.warning_amber_rounded, 1),
+                            _buildDiagnosisButton(context, "Infected with Anaplasmosis", Colors.orangeAccent, Icons.warning_rounded, 2),
+                            _buildDiagnosisButton(context, "Not Infected", Colors.green, Icons.check_circle_outline, 3),
+                            _buildDiagnosisButton(context, "Not Clear", Colors.grey, Icons.help_outline, 4),
                           ],
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 15),
-
                     Card(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -98,6 +188,7 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             TextField(
+                              controller: _suggestionController,
                               decoration: InputDecoration(
                                 hintText: "Enter your suggestions...",
                                 filled: true,
@@ -106,43 +197,28 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
                               ),
                               maxLines: 2,
                             ),
-                            const SizedBox(height: 12),
-
-                            Center(
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueAccent,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                                  elevation: 5,
-                                ),
-                                child: const Text("Submit Feedback", style: TextStyle(fontSize: 16, color: Colors.white)),
-                              ),
-                            ),
                           ],
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           maxWidth: constraints.maxWidth * 0.8,
                         ),
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Store diagnosis and suggestions in DB
-                          },
+                          onPressed: _submitDiagnosis,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1B5E20),
                             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                             elevation: 5,
                           ),
-                          child: const Text("Submit Diagnosis", style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            "Submit Diagnosis",
+                            style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),
@@ -156,22 +232,13 @@ class DoctorCaseAnalysisPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDiagnosisButton(BuildContext context, String text, Color color, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 300),
-        child: ElevatedButton.icon(
-          onPressed: () {},
-          icon: Icon(icon, color: Colors.white, size: 22),
-          label: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: color,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            elevation: 4,
-          ),
-        ),
+  Widget _buildDiagnosisButton(BuildContext context, String text, Color color, IconData icon, int diagnosisNumber) {
+    return ElevatedButton.icon(
+      onPressed: () => _selectDiagnosis(diagnosisNumber),
+      icon: Icon(icon, color: Colors.white),
+      label: Text(text),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: selectedDiagnosis == diagnosisNumber ? Colors.black : color,
       ),
     );
   }
